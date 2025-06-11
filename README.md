@@ -102,7 +102,16 @@ A collection of PowerShell scripts for systems administration, network diagnosti
 - **Note:** Cross-platform PowerShell required (e.g., PowerShell 7+ with WSL access).
 
 ---
+### 11. **Get-FWRules.ps1**
+**Description:** This PowerShell script audits **inbound Windows Firewall rules** that are:
 
+- Enabled ✅  
+- Allowing traffic ✅  
+- Active in the current policy ✅  
+
+It generates a clean, formatted report and optionally sends the results via email. The script uses modern cmdlets from the `NetSecurity` module, making it suitable for Windows 8+, Windows 10/11, and Server 2012+ environments.
+
+---
 ## ⚠️ Security Notes
 
 - Avoid running scripts that use `Invoke-Expression` on remote content unless fully trusted.
