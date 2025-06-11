@@ -1,0 +1,30 @@
+function Clear-OutlookAttachmentCache {
+    [CmdletBinding()]
+    param (
+        [switch]$VerboseOutput
+    )
+
+    $cachePath = Join-Path -Path $env:LOCALAPPDATA -ChildPath "Microsoft\Windows\INetCache\Content.Outlook"
+    Write-Verbose "Looking for Outlook temp cache folders in: $cachePath"
+
+    if (Test-Path -Path $cachePath) {
+        $folders = Get-ChildItem -Path $cachePath -Directory -ErrorAction SilentlyContinue
+
+        foreach ($folder in $folders) {
+            try {
+                Write-Verbose "Clearing files in: $($folder.FullName)"
+                Get-ChildItem -Path $folder.FullName -Recurse -Force -ErrorAction SilentlyContinue |
+                    Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
+            } catch {
+                Write-Warning "Failed to clear: $($folder.FullName) — $($_.Exception.Message)"
+            }
+        }
+
+        Write-Host "Outlook attachment cache cleared from: $cachePath"
+    } else {
+        Write-Warning "Outlook cache path not found: $cachePath"
+    }
+}
+
+# Call the function with optional verbosity
+Clear-OutlookAttachmentCache -Verbose

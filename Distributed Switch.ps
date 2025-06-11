@@ -1,0 +1,68 @@
+# ===== CONFIGURATION =====
+$dvSwitchName = "DvSwitch"
+$datacenterName = "Sleepy-puppy"
+$vmhostName = "192.168.6.10"
+$uplinks = @("vmnic2", "vmnic3")
+
+$portGroups = @(
+    @{Name="DPG-Mgmt-60"; Vlan=60},
+    @{Name="DPG-Server-30"; Vlan=30},
+    @{Name="DPG-Training-999"; Vlan=999},
+    @{Name="DPG-HA-1024"; Vlan=1024},
+    @{Name="DPG-20"; Vlan=20},
+    @{Name="DPG-F5-VIP"; Vlan=0},   # Untagged
+    @{Name="DPG-k8-11"; Vlan=11}
+)
+
+# ===== BEGIN SCRIPT =====
+$dc = Get-Datacenter -Name $datacenterName
+$vmhost = Get-VMHost -Name $vmhostName
+
+# Attempt to get the existing DvSwitch
+$existingDvSwitch = Get-VDSwitch -Name $dvSwitchName -ErrorAction SilentlyContinue
+
+if ($existingDvSwitch) {
+    Write-Host "🧹 Cleaning up existing DvSwitch: $dvSwitchName..."
+
+    # Remove all non-uplink port groups
+    Get-VDPortgroup -VDSwitch $existingDvSwitch | Where-Object { $_.IsUplink -eq $false } |
+        Remove-VDPortgroup -Confirm:$false
+
+    # Remove physical NICs
+    Get-VMHostNetworkAdapter -VMHost $vmhost | Where-Object { $_.Name -in $uplinks } |
+        ForEach-Object {
+            Remove-VDSwitchPhysicalNetworkAdapter -VMHostNetworkAdapter $_ -Confirm:$false
+        }
+
+    # Remove host from DvSwitch
+    Remove-VDSwitchVMHost -VMHost $vmhost -VDSwitch $existingDvSwitch -Confirm:$false
+
+    # Remove the DvSwitch itself
+    Remove-VDSwitch -VDSwitch $existingDvSwitch -Confirm:$false
+
+    Write-Host "✅ Old DvSwitch removed."
+}
+
+# Create the new DvSwitch
+Write-Host "🛠 Creating new DvSwitch: $dvSwitchName"
+$newDvSwitch = New-VDSwitch -Name $dvSwitchName -Location $dc -NumUplinkPorts $uplinks.Count -Mtu 1500
+
+# Add the host to the new switch
+Add-VDSwitchVMHost -VMHost $vmhost -VDSwitch $newDvSwitch
+
+# Add uplinks
+foreach ($uplink in $uplinks) {
+    Add-VDSwitchPhysicalNetworkAdapter -VMHost $vmhost -VDSwitch $newDvSwitch -Nic $uplink -Confirm:$false
+}
+
+# Create port groups
+foreach ($pg in $portGroups) {
+    Write-Host "📶 Creating Port Group: $($pg.Name) (VLAN $($pg.Vlan))"
+    New-VDPortgroup -Name $pg.Name -VDSwitch $newDvSwitch -VlanId $pg.Vlan -NumPorts 128
+}
+
+# Configure VLAN trunking on the uplink port group
+$uplinkPG = Get-VDPortgroup -VDSwitch $newDvSwitch | Where-Object { $_.IsUplink -eq $true }
+Set-VDPortgroup -VDPortgroup $uplinkPG -VLanTrunkRange "11,20,30,60,999,1024" -Confirm:$false
+
+Write-Host "`n✅ New DvSwitch $dvSwitchName created and configured on host $vmhostName."
