@@ -1,130 +1,162 @@
 # PowerShell Automation Toolkit
 
-A collection of PowerShell scripts for systems administration, network diagnostics, Active Directory enumeration, and security auditing. These tools are designed to help IT professionals streamline common administrative tasks and diagnostics.
+This repository contains a collection of PowerShell scripts designed to assist with systems administration, diagnostics, security, and automation tasks on modern Windows systems.
+
+## Table of Contents
+
+- [Better-Netstat](#better-netstat)
+- [ConvertFrom-EpochDate](#convertfrom-epochdate)
+- [ConvertFrom-Xml](#convertfrom-xml)
+- [Enumerate-Mutex](#enumerate-mutex)
+- [FileOperations](#fileoperations)
+- [Find-ADS](#find-ads)
+- [Find-ExtensionAssociation](#find-extensionassociation)
+- [Get-Assemblies](#get-assemblies)
+- [Get-CR](#get-cr)
+- [Get-EgressIP](#get-egressip)
+- [Get-FileSince](#get-filesince)
+- [Get-FWRules](#get-fwrules)
+- [Get-Handles](#get-handles)
 
 ---
 
-## 🔧 Requirements
+## Script Usage and Descriptions
 
-- PowerShell 5.1+ or PowerShell 7 (depending on script)
-- Windows OS (some scripts use Windows-only cmdlets like `Get-WinEvent`)
-- Administrative privileges (some scripts access privileged resources)
-- Internet access (for scripts that download external content)
+### Better-Netstat
 
----
-
-## 📂 Script Index
-
-### 1. **Get-Inventory.ps1**
-- **Description:** Gathers hardware and software details across remote systems and exports results to Excel.
-- **Usage:** 
-  ```powershell
-  .\Get-Inventory.ps1
-  ```
-- **Features:**
-  - Excel export with hardware, memory, CPU, disk, network, and services info
-  - Supports alternate credentials and different selection methods (AD, file, manual)
+**Synopsis:** Enhanced netstat-style report using PowerShell and process inspection.  
+**Example Usage:**
+```powershell
+.\Better-Netstat.ps1
+```
 
 ---
 
-### 2. **Get-ATJobs.ps1**
-- **Description:** Parses output from `at.exe` to extract scheduled tasks.
-- **Usage:**
-  ```powershell
-  Get-ATJobs
-  ```
+### ConvertFrom-EpochDate
+
+**Synopsis:** Converts a Unix epoch timestamp to a human-readable local time.  
+**Example Usage:**
+```powershell
+.\ConvertFrom-EpochDate.ps1
+```
 
 ---
 
-### 3. **Get-IPConfig.ps1**
-- **Description:** Parses output from `ipconfig /all` or modern cmdlets to a PowerShell object.
-- **Improved version:** Uses `Get-NetIPConfiguration` and `Get-NetAdapter` for accuracy and structure.
-- **Usage:**
-  ```powershell
-  Get-IPConfig | Format-Table
-  ```
+### ConvertFrom-Xml
+
+**Synopsis:** Converts an XML file into a structured PowerShell object.  
+**Example Usage:**
+```powershell
+.\ConvertFrom-Xml.ps1
+```
 
 ---
 
-### 4. **Get-LogonFailures.ps1**
-- **Description:** Extracts failed logon attempts (Event ID 4625) from the Security event log.
-- **CSV Export:**
-  ```powershell
-  Get-LogonFailures | Export-Csv .\FailedLogons.csv -NoTypeInformation
-  ```
+### Enumerate-Mutex
+
+**Synopsis:** Uses P/Invoke with `ntdll.dll` to enumerate all mutex handles in the system.  
+**Example Usage:**
+```powershell
+.\Enumerate-Mutex.ps1
+```
 
 ---
 
-### 5. **PortScan.ps1**
-- **Description:** Performs TCP port scans using `System.Net.Sockets.TCPClient`.
-- **Usage Examples:**
-  ```powershell
-  .\PortScan.ps1 -ComputerName "192.168.1.10" -Port 80
-  .\PortScan.ps1 -ComputerName "10.0.0.1" -Port (1..1024)
-  ```
+### FileOperations
+
+**Synopsis:** Compresses a file into a Base64-encoded GZip stream or decompresses it back to file.  
+**Example Usage:**
+```powershell
+Compress-File -File .\input.txt -outputLoc .\encoded.txt
+Decompress-File -memstream "BASE64STRING" -outputloc .\decoded.txt
+```
 
 ---
 
-### 6. **Get-Taskinfo.ps1**
-- **Description:** Converts `tasklist.exe` output into structured objects and shows tasks, modules, and services.
-- **Menu Options:**
-  1. Modules by DLL
-  2. Modules by Process
-  3. Verbose Task Info
-  4. Services by Process
+### Find-ADS
+
+**Synopsis:** Scans NTFS volumes for Alternate Data Streams.  
+**Example Usage:**
+```powershell
+.\Find-ADS.ps1
+```
 
 ---
 
-### 7. **NetAssemblySearch.ps1**
-- **Description:** Searches loaded .NET assemblies for types matching a pattern.
-- **Usage:**
-  ```powershell
-  $searchtext = "*SQL*"
-  [AppDomain]::CurrentDomain.GetAssemblies() | ForEach-Object { $_.GetExportedTypes() } | Where-Object { $_ -like $searchtext }
-  ```
+### Find-ExtensionAssociation
+
+**Synopsis:** Determines the executable used to open a specific file type.  
+**Example Usage:**
+```powershell
+.\Find-ExtensionAssociation.ps1
+```
 
 ---
 
-### 8. **Invoke-ScriptBasedOnOSArch.ps1**
-- **Description:** Determines OS architecture and dynamically downloads the correct script from GitHub.
-- **Note:** Uses `Invoke-Expression` which should be used with caution.
+### Get-Assemblies
+
+**Synopsis:** Searches for loaded .NET assemblies in the current AppDomain matching a pattern.  
+**Example Usage:**
+```powershell
+.\Get-Assemblies.ps1
+```
 
 ---
 
-### 9. **MemoryMappedDemo.ps1**
-- **Description:** Playground script to experiment with memory-mapped files via .NET APIs.
-- **Status:** Experimental; not fully implemented.
+### Get-CR
+
+**Synopsis:** Downloads and executes a CR payload script based on system architecture.  
+**Example Usage:**
+```powershell
+.\Get-CR.ps1
+```
 
 ---
 
-### 10. **LsofParser.ps1**
-- **Description:** Parses `lsof -i` output (on WSL/Linux) into PowerShell objects with process information.
-- **Note:** Cross-platform PowerShell required (e.g., PowerShell 7+ with WSL access).
+### Get-EgressIP
 
----
-### 11. **Get-FWRules.ps1**
-**Description:** This PowerShell script audits **inbound Windows Firewall rules** that are:
-
-- Enabled ✅  
-- Allowing traffic ✅  
-- Active in the current policy ✅  
-
-It generates a clean, formatted report and optionally sends the results via email. The script uses modern cmdlets from the `NetSecurity` module, making it suitable for Windows 8+, Windows 10/11, and Server 2012+ environments.
-
----
-## ⚠️ Security Notes
-
-- Avoid running scripts that use `Invoke-Expression` on remote content unless fully trusted.
-- Scripts that query event logs or run WMI may require elevated privileges.
+**Synopsis:** Retrieves the public-facing IP address and geolocation information.  
+**Example Usage:**
+```powershell
+.\Get-EgressIP.ps1
+```
 
 ---
 
-## 📦 Contribution
+### Get-FileSince
 
-Feel free to fork this repository and contribute improvements, error handling, or additional modules!
+**Synopsis:** Lists files modified since a specified date (default: since 01/01/2016).  
+**Example Usage:**
+```powershell
+.\Get-FileSince.ps1
+```
 
 ---
 
-## 📜 License
+### Get-FWRules
 
-MIT License – Use at your own risk. No warranty provided.
+**Synopsis:** Retrieves Windows Firewall rules that are inbound, enabled, and allow traffic.  
+**Example Usage:**
+```powershell
+.\Get-FWRules.ps1
+```
+
+---
+
+### Get-Handles
+
+**Synopsis:** Lists processes with high handle counts, which could indicate resource leaks.  
+**Example Usage:**
+```powershell
+.\Get-Handles.ps1
+```
+
+---
+
+## Contribution
+
+Feel free to open issues or submit pull requests to improve or expand these scripts.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
